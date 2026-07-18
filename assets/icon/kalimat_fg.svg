@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
+  <!-- Adaptive-icon foreground: wordmark on a TRANSPARENT background.
+       The teal is supplied by adaptive_icon_background (#0F5B52) in pubspec.yaml.
+       Glyphs sit within the ~66% safe zone so the launcher mask never clips them. -->
+  <text x="512" y="580" text-anchor="middle" font-family="Reem Kufi, sans-serif"
+        font-size="240" font-weight="700" fill="#F4EEE1">كلمات</text>
+</svg>

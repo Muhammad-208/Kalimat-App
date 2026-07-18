@@ -1,0 +1,27 @@
+name: flutter
+
+on:
+  push:
+    branches: ["**"]
+  pull_request:
+
+jobs:
+  analyze-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # Pre-existing style lints (const hints, version-drift deprecations) are
+      # non-fatal here; the build fails only on real warnings/errors.
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+
+      - name: Test
+        run: flutter test
