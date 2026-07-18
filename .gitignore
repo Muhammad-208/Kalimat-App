@@ -11,6 +11,7 @@ build/
 
 # Android build + SIGNING SECRETS (never commit these)
 android/.gradle/
+android/local.properties
 **/GeneratedPluginRegistrant.*
 key.properties
 android/key.properties
