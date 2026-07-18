@@ -1,0 +1,89 @@
+name: kalimat
+description: "كلمات — قاموس جذور القرآن. Offline-first Quranic roots dictionary."
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+  flutter: ">=3.22.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_localizations:
+    sdk: flutter
+
+  # State management (lightweight, no codegen needed to start)
+  flutter_riverpod: ^2.5.1
+
+  # Routing
+  go_router: ^14.2.0
+
+  # Offline database — the bundled SQLite spine (roots / words / furuq)
+  sqflite: ^2.3.3
+  path: ^1.9.0
+  path_provider: ^2.1.3
+
+  # Offline per-user settings (which sources to show/hide)
+  shared_preferences: ^2.2.3
+
+  # SVG rendering (Google logo on the login screen, future icons)
+  flutter_svg: ^2.0.10
+
+  # Sync backend — Firebase Auth (Google + email) + Firestore for user state
+  firebase_core: ^3.6.0
+  firebase_auth: ^5.3.1
+  cloud_firestore: ^5.4.4
+  google_sign_in: ^6.2.1
+
+  # Launcher-icon generation for the كلمات wordmark (dev-time)
+  # (kept here so `flutter pub run` finds it)
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^4.0.0
+  flutter_launcher_icons: ^0.13.1
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    # The prebuilt SQLite database produced by your Python pipeline
+    # (build_quran_db.py + build_furuq.py). Copied to app storage on first run.
+    - assets/db/kalimat.db
+
+  fonts:
+    # All four are SIL OFL — free to bundle & redistribute in a Play app.
+    # Drop the .ttf files into assets/fonts/ (see assets/fonts/README.md).
+    - family: ReemKufi          # logo / display wordmark  (كَلِمَات)
+      fonts:
+        - asset: assets/fonts/ReemKufi-Regular.ttf
+        - asset: assets/fonts/ReemKufi-Bold.ttf
+          weight: 700
+    - family: Amiri             # root display  (ب ح ر)
+      fonts:
+        - asset: assets/fonts/Amiri-Regular.ttf
+        - asset: assets/fonts/Amiri-Bold.ttf
+          weight: 700
+    - family: AmiriQuran        # Quranic verses  (ظَهَرَ الْفَسَادُ...)
+      fonts:
+        - asset: assets/fonts/AmiriQuran-Regular.ttf
+    - family: IBMPlexSansArabic # UI / body text
+      fonts:
+        - asset: assets/fonts/IBMPlexSansArabic-Regular.ttf
+        - asset: assets/fonts/IBMPlexSansArabic-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/IBMPlexSansArabic-SemiBold.ttf
+          weight: 600
+        - asset: assets/fonts/IBMPlexSansArabic-Bold.ttf
+          weight: 700
+
+# ── App launcher icon: the كلمات wordmark ────────────────────────────
+# Run:  flutter pub run flutter_launcher_icons
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon/kalimat_icon.png"          # 1024×1024 teal wordmark
+  adaptive_icon_background: "#0F5B52"                   # brand teal
+  adaptive_icon_foreground: "assets/icon/kalimat_fg.png"

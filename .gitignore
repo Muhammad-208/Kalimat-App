@@ -1,0 +1,30 @@
+# Flutter / Dart
+.dart_tool/
+.packages
+.pub-cache/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+*.iml
+.idea/
+.vscode/
+
+# Android build + SIGNING SECRETS (never commit these)
+android/.gradle/
+**/GeneratedPluginRegistrant.*
+key.properties
+android/key.properties
+*.keystore
+*.jks
+
+# Editor tool local artifacts
+tools/editor/review_source_*.tsv
+**/__pycache__/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# NOTE: firebase_options.dart and google-services.json are client config
+# (not secrets) and ARE committed so the project builds on clone.
+# assets/db/kalimat.db is committed as a working seed database.
