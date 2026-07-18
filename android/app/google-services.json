@@ -7,64 +7,6 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:173345566820:android:42b36fc306ad6690516f71",
-        "android_client_info": {
-          "package_name": "Ccom.kalimat.app"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "173345566820-lj1hphf16l1dcpcpnkh0og2sfagdqqvj.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyDiB-k-Fm53_4KEzG69QTSUSVNqnIFgoV4"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "173345566820-lj1hphf16l1dcpcpnkh0og2sfagdqqvj.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:173345566820:android:4796ddac79865123516f71",
-        "android_client_info": {
-          "package_name": "Com.kalimat.app"
-        }
-      },
-      "oauth_client": [
-        {
-          "client_id": "173345566820-lj1hphf16l1dcpcpnkh0og2sfagdqqvj.apps.googleusercontent.com",
-          "client_type": 3
-        }
-      ],
-      "api_key": [
-        {
-          "current_key": "AIzaSyDiB-k-Fm53_4KEzG69QTSUSVNqnIFgoV4"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": [
-            {
-              "client_id": "173345566820-lj1hphf16l1dcpcpnkh0og2sfagdqqvj.apps.googleusercontent.com",
-              "client_type": 3
-            }
-          ]
-        }
-      }
-    },
-    {
-      "client_info": {
         "mobilesdk_app_id": "1:173345566820:android:3724d68a541e68af516f71",
         "android_client_info": {
           "package_name": "com.kalimat.app"
