@@ -20,6 +20,7 @@ android/key.properties
 
 # Editor tool local artifacts
 tools/editor/review_source_*.tsv
+tools/review_source_*.tsv
 **/__pycache__/
 
 # OS
