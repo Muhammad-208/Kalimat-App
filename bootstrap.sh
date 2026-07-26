@@ -30,5 +30,11 @@ python3 tools/apply_signing.py
 echo "→ flutter pub get ..."
 flutter pub get
 
+# flutter create writes the default Flutter launcher icon into android/res.
+# pubspec configures flutter_launcher_icons with the كلمات wordmark, but the
+# tool has to actually run or every build ships the stock blue Flutter logo.
+echo "→ generating launcher icons ..."
+dart run flutter_launcher_icons
+
 echo "✓ done. applicationId is com.kalimat.app"
 echo "  next: flutterfire configure  (see SYNC_SETUP.md), then flutter run"
