@@ -47,9 +47,23 @@ jobs:
           distribution: temurin
           java-version: "17"
 
+      # A silent no-op here produces a debug-signed APK that cannot install over
+      # an upload-signed build, so verify the injector before relying on it.
+      - name: Test signing injector
+        run: python3 test_apply_signing.py
+        working-directory: tools
+
       # android/ is not tracked (bootstrap.sh generates it), so create it here.
       - name: Generate platform folders
         run: bash bootstrap.sh
+
+      - name: Verify signing config was actually injected
+        run: |
+          if ! grep -q 'signingConfigs {' android/app/build.gradle.kts; then
+            echo "::error::apply_signing.py did not inject the signing block."
+            exit 1
+          fi
+          echo "signing block present in build.gradle.kts"
 
       # Checked inside the shell, not in `if:` — step-level env is not available
       # to that step's own condition, so the guard would never fire there.

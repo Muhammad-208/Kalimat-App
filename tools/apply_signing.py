@@ -62,17 +62,18 @@ BUILDTYPES_RE = re.compile(
     r"(?P<indent>[ \t]*)buildTypes\s*\{.*?\n(?P=indent)\}\n", re.DOTALL)
 
 
-def main():
-    path = os.path.normpath(GRADLE)
-    if not os.path.exists(path):
-        sys.exit(f"{path} not found — run bootstrap.sh first.")
+# Marker for "we already ran". Must be unique to OUR block: the stock template
+# already contains `signingConfigs.getByName("debug")`, so testing for
+# "signingConfigs" matches a pristine file and skips injection entirely.
+MARKER = "keystorePropertiesFile"
 
-    src = open(path, encoding="utf-8").read()
 
-    if "signingConfigs" in src:
-        print("✓ signing config already present — nothing to do")
-        return
+def already_applied(src: str) -> bool:
+    return MARKER in src
 
+
+def inject(src: str) -> str:
+    """Return `src` with the signing wiring applied. Raises if it can't."""
     if not src.startswith("import "):
         src = IMPORTS + src
 
@@ -82,7 +83,25 @@ def main():
     # Replace the template's buildTypes block with signingConfigs + buildTypes.
     src, n = BUILDTYPES_RE.subn(SIGNING, src, count=1)
     if n == 0:
-        sys.exit("could not find a buildTypes block to replace — inspect the file.")
+        raise ValueError("could not find a buildTypes block to replace")
+    return src
+
+
+def main():
+    path = os.path.normpath(GRADLE)
+    if not os.path.exists(path):
+        sys.exit(f"{path} not found — run bootstrap.sh first.")
+
+    src = open(path, encoding="utf-8").read()
+
+    if already_applied(src):
+        print("✓ signing config already present — nothing to do")
+        return
+
+    try:
+        src = inject(src)
+    except ValueError as e:
+        sys.exit(f"{e} — inspect {path}.")
 
     open(path, "w", encoding="utf-8").write(src)
     print(f"✓ signing config injected into {path}")
