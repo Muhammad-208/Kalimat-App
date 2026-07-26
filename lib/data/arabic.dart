@@ -27,6 +27,27 @@ String normalizeArabic(String text) {
 String stripArticle(String n) =>
     n.startsWith('ال') && n.length >= 4 ? n.substring(2) : n;
 
+/// Closed-class function words (حروف المعاني والضمائر), in normalized form.
+///
+/// These carry no root, but undiacritized they collide with real ones: ماء
+/// normalizes to ما (the hamza is dropped), so كما/بما land on موه, and the
+/// skeleton tier pulls ولما onto يوم. A dictionary of Quranic roots must
+/// decline rather than guess — a wrong root is worse than no answer.
+///
+/// Words that genuinely do have roots are deliberately absent: كان → كون,
+/// كلما → كلل, ليس → ليس all remain searchable.
+const _functionWords = <String>{
+  'ما', 'من', 'عن', 'في', 'الي', 'علي', 'مع', 'لدي', 'عند',
+  'لم', 'لن', 'لا', 'ان', 'اذا', 'اذ', 'قد', 'ثم', 'بل', 'او', 'ام',
+  'هل', 'لو', 'لولا', 'حتي', 'كي', 'لكن', 'بلي', 'نعم',
+  'لما', 'كما', 'بما', 'فما', 'فلما', 'ولما', 'وما', 'لمن', 'ممن', 'عما',
+  'هذا', 'هذه', 'ذلك', 'تلك', 'هولاء', 'كذلك', 'الذي', 'التي', 'الذين',
+  'هو', 'هي', 'هم', 'هن', 'نحن', 'انا', 'انت', 'انتم', 'اياك',
+};
+
+/// Whether [normalized] is a function word that should never resolve to a root.
+bool isFunctionWord(String normalized) => _functionWords.contains(normalized);
+
 /// Consonantal skeleton: drops long vowels so الصلاة reaches the corpus's
 /// ٱلصَّلَوٰة, and كتاب reaches كتب. Lossy — only used as the last search tier.
 String skeletonArabic(String n) {

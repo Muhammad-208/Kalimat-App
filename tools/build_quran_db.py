@@ -76,21 +76,17 @@ def skeleton(n: str) -> str:
     return s if len(s) >= 2 else n
 
 
-def strip_prefixes(n: str):
-    """All plausible readings once Arabic proclitics (و ف ب ك ل ال) are peeled."""
-    out = {n}
-    for cur in (n, n[1:] if n[:1] in "وف" else n):
-        if len(cur) < 3:
-            continue
-        out.add(cur)
-        if cur.startswith("ال") and len(cur) >= 4:
-            out.add(cur[2:])
-        if cur[:1] in "بكل" and len(cur) >= 4:
-            rest = cur[1:]
-            out.add(rest)
-            if rest.startswith("ال") and len(rest) >= 4:
-                out.add(rest[2:])
-    return {x for x in out if len(x) >= 2}
+def prefix_variants(forms: list[str], root_idx: int):
+    """Readings of a word with its leading morphemes progressively dropped.
+
+    Driven by the corpus's own segmentation, never by guessing letters. Peeling
+    proclitics heuristically is unsafe: كُلَّمَا (root كلل) is a SINGLE segment,
+    so treating its initial ك as the "like" proclitic invents the reading لما
+    and files a common particle under كلل.
+    """
+    out = {"".join(forms[k:]) for k in range(root_idx + 1)}
+    out.add(forms[root_idx])          # bare stem, without any suffixes
+    return {x for x in out if x}
 
 
 SURAH_NAMES = [
@@ -119,6 +115,7 @@ def parse_morphology(path):
     """-> (words, ayah_text). words: list of (root, surface, surah, ayah, pos)."""
     seg_forms = defaultdict(list)   # (s,a,w) -> [(seg, form)]
     seg_root = {}                   # (s,a,w) -> root
+    seg_root_no = {}                # (s,a,w) -> segment number carrying the root
 
     with open(path, encoding="utf-8") as fh:
         for line in fh:
@@ -142,14 +139,22 @@ def parse_morphology(path):
             m = ROOT_RE.search(feats)
             if m and key not in seg_root:
                 seg_root[key] = m.group(1)
+                seg_root_no[key] = seg
 
     words, ayah_words = [], defaultdict(list)
     for (s, a, w), segs in seg_forms.items():
-        surface = "".join(f for _, f in sorted(segs))
+        ordered = sorted(segs)
+        forms = [f for _, f in ordered]
+        surface = "".join(forms)
         ayah_words[(s, a)].append((w, surface))
         root = seg_root.get((s, a, w))
         if root:
-            words.append((root, surface, s, a, w))
+            # Position of the stem within this word's segments, so prefixes can
+            # be peeled by morphology rather than by guessing letters.
+            root_no = seg_root_no[(s, a, w)]
+            root_idx = next(
+                (i for i, (no, _) in enumerate(ordered) if no == root_no), 0)
+            words.append((root, surface, s, a, w, forms, root_idx))
 
     ayah_text = {
         loc: " ".join(sur for _, sur in sorted(ws))
@@ -234,7 +239,8 @@ def build(morphology_path, version):
     out.executemany(
         "INSERT INTO words(root_id,surface,surface_norm,surah,ayah,position)"
         " VALUES (?,?,?,?,?,?)",
-        [(root_id[r], sur, normalize(sur), s, a, p) for r, sur, s, a, p in words])
+        [(root_id[r], sur, normalize(sur), s, a, p)
+         for r, sur, s, a, p, _forms, _ridx in words])
 
     # ── search keys ──
     # Highest-frequency root wins a contested key, so الكتاب lands on كتب
@@ -253,10 +259,10 @@ def build(morphology_path, version):
         add_key(0, n, root, rid)
         add_key(1, skeleton(n), root, rid)
 
-    for root, surface, _s, _a, _p in words:
+    for root, _surface, _s, _a, _p, forms, root_idx in words:
         rid = root_id[root]
-        for variant in (normalize(surface), normalize_dagger_alef(surface)):
-            for cand in strip_prefixes(variant):
+        for piece in prefix_variants(forms, root_idx):
+            for cand in (normalize(piece), normalize_dagger_alef(piece)):
                 add_key(0, cand, root, rid)
                 add_key(1, skeleton(cand), root, rid)
 

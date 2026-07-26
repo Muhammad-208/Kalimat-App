@@ -47,6 +47,9 @@ class DictionaryRepository {
   Future<Root?> resolveRoot(String query) async {
     final n = normalizeArabic(query);
     if (n.isEmpty) return null;
+    // Particles and pronouns have no root; undiacritized they collide with
+    // real ones (بما -> ماء/موه), so decline instead of guessing.
+    if (isFunctionWord(n)) return null;
     final db = await _d;
     final bare = stripArticle(n);
 
@@ -82,7 +85,7 @@ class DictionaryRepository {
     );
     if (hit.isNotEmpty) return Root.fromMap(hit.first);
 
-    // 4) last resort: prefix match on the normalized root
+    // 5) last resort: prefix match on the normalized root
     rows = await db.query('roots',
         where: 'root_norm LIKE ?',
         whereArgs: ['$bare%'],

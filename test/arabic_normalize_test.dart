@@ -42,6 +42,25 @@ void main() {
     });
   });
 
+  group('isFunctionWord', () {
+    // Regression: search for لما once answered كلل, because كُلَّمَا was being
+    // mis-split as ك + لما. Particles must decline rather than guess — in a
+    // dictionary of Quranic roots a wrong root is worse than no answer.
+    test('particles and pronouns are rejected', () {
+      for (final w in ['لما', 'كما', 'بما', 'ولما', 'لمن', 'ما', 'من', 'ذلك']) {
+        expect(isFunctionWord(normalizeArabic(w)), isTrue, reason: w);
+      }
+    });
+
+    test('words that genuinely have roots are NOT rejected', () {
+      // كلما is a real word (root كلل); الماء is موه. Over-blocking these
+      // would silently delete valid lookups.
+      for (final w in ['كلما', 'كل', 'كان', 'الماء', 'بحر', 'الصلاة']) {
+        expect(isFunctionWord(normalizeArabic(w)), isFalse, reason: w);
+      }
+    });
+  });
+
   group('skeletonArabic', () {
     test('drops long vowels so orthographic variants converge', () {
       // The corpus writes ٱلصَّلَوٰة; users type الصلاة. Both must collapse alike.
