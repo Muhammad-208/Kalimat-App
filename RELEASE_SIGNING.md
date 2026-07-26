@@ -126,11 +126,38 @@ android {
 }
 ```
 
-> `bootstrap.sh` already rewrites `applicationId` to `com.kalimat.app`. If you're
-> on the Flutter template that reads `minSdk` from `flutter.minSdkVersion`, set
-> the Flutter floor instead by leaving `minSdk = flutter.minSdkVersion` and
-> ensuring your Flutter is recent enough — but the explicit `23` above is the
-> safe, self-contained choice.
+> `bootstrap.sh` already rewrites `applicationId` to `com.kalimat.app` and runs
+> `tools/apply_signing.py`, which injects the block above automatically — the
+> manual edit is only needed if you are wiring this by hand.
+>
+> **minSdk:** current Flutter already defaults `flutter.minSdkVersion` to 24,
+> which clears Firebase Auth's floor of 23. Pinning it explicitly is optional.
+
+---
+
+## 3c. Signing in CI (GitHub Actions)
+
+`.github/workflows/build-apk.yml` signs with the upload key when these three
+repository secrets exist, and silently falls back to the debug key when they
+don't. **A debug-signed APK cannot be installed over an upload-signed one** —
+Android rejects it with "Package signature does not match the installed app" —
+so set these if you want CI builds to update your phone in place.
+
+Add at **Settings → Secrets and variables → Actions**:
+
+| Secret | Value |
+|---|---|
+| `KEYSTORE_BASE64` | output of `base64 -w0 ~/kalimat-upload.jks` |
+| `KEYSTORE_PASSWORD` | the store/key password |
+| `KEY_ALIAS` | `upload` |
+
+The workflow logs which key it used — look for `Upload key configured` versus
+the `signing with the DEBUG key` warning, and confirm the `Report signer` step
+prints `CN=Kalimat` rather than `CN=Android Debug`.
+
+> On a **public** repo, secrets are not exposed to pull requests from forks, but
+> you are still storing signing-key material on a third party. That is a
+> deliberate trade-off — the alternative is building releases locally only.
 
 ---
 
