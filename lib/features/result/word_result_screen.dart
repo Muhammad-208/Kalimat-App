@@ -100,8 +100,19 @@ class _Content extends ConsumerWidget {
           const SizedBox(height: 16),
 
           // ── Simplified explanation ──
+          // A generated summary is titled and footed differently from a
+          // hand-written one: the reader must never take editorial prose for
+          // classical text.
           if (root.simple != null)
-            InfoCard(title: 'الشرح المبسّط', body: root.simple!, tinted: true),
+            InfoCard(
+              title: root.simpleGenerated ? 'شرح تحريري' : 'الشرح المبسّط',
+              body: root.simpleGenerated
+                  ? '${root.simple!}\n\n'
+                      '— صياغة تحريرية مبنية على المصادر أدناه، '
+                      'وليست نصًّا منقولًا عن مؤلف.'
+                  : root.simple!,
+              tinted: true,
+            ),
           const SizedBox(height: 16),
 
           // ── Core meaning (Ibn Faris) ──

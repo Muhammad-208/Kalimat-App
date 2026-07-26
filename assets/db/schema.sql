@@ -17,8 +17,12 @@ CREATE TABLE roots (
   root_fuzzy   TEXT NOT NULL DEFAULT '', -- collapse_doubles(root_norm): ربب -> رب
   freq         INTEGER NOT NULL DEFAULT 0, -- total Quranic occurrences (42)
 
-  -- Pre-generated, human-reviewed content (never live-LLM):
+  -- Pre-generated content (never live-LLM — generated offline, then shipped):
   simple       TEXT,                   -- الشرح المبسّط
+  -- 1 = `simple` was written by a model from the sources below rather than by a
+  -- human. The UI MUST label these so a reader never mistakes an editorial
+  -- summary for classical text. Hand-written entries stay 0.
+  simple_generated INTEGER NOT NULL DEFAULT 0,
   maqayis      TEXT,                   -- المعنى المحوري — Ibn Faris
   semitic      TEXT,                   -- المقابل السامي (nullable; disputed)
   semitic_note TEXT                    -- e.g. "cf. Proto-Semitic *b-ḥ-r (?)"

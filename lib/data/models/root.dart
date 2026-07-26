@@ -5,6 +5,9 @@ class Root {
   final String rootSpaced; // ب ح ر
   final int freq; // 42
   final String? simple; // الشرح المبسّط
+  /// True when [simple] was written by a model from the classical sources
+  /// rather than by a human. The UI must label these — see word_result_screen.
+  final bool simpleGenerated;
   final String? maqayis; // المعنى المحوري — ابن فارس
   final String? semitic; // المقابل السامي (disputed, nullable)
   final String? semiticNote; // cf. Proto-Semitic *b-ḥ-r (?)
@@ -15,6 +18,7 @@ class Root {
     required this.rootSpaced,
     required this.freq,
     this.simple,
+    this.simpleGenerated = false,
     this.maqayis,
     this.semitic,
     this.semiticNote,
@@ -26,6 +30,9 @@ class Root {
         rootSpaced: m['root_spaced'] as String,
         freq: (m['freq'] as int?) ?? 0,
         simple: m['simple'] as String?,
+        // Absent in a pre-v2 DB, so default to "human-written" rather than
+        // silently labelling curated text as generated.
+        simpleGenerated: (m['simple_generated'] as int?) == 1,
         maqayis: m['maqayis'] as String?,
         semitic: m['semitic'] as String?,
         semiticNote: m['semitic_note'] as String?,
