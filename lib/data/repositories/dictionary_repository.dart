@@ -1,4 +1,5 @@
 import 'package:sqflite/sqflite.dart';
+import '../arabic.dart';
 import '../db/database.dart';
 import '../models/root.dart';
 import '../models/word.dart';
@@ -37,28 +38,56 @@ class DictionaryRepository {
   }
 
   // ── Search ─────────────────────────────────────────────
-  /// Resolves a typed word to its root. In production the Python pipeline
-  /// stores a word→root index; here we match the surface form or the root.
+  /// Resolves a typed word to its root.
+  ///
+  /// Users type undiacritized, often with the ال article and inflected
+  /// ("البحر", "يعلمون"), while the corpus stores fully vocalized forms
+  /// ("ٱلْبَحْرَ"). Everything is therefore compared on the normalized columns
+  /// the build pipeline precomputes — never on the raw text.
   Future<Root?> resolveRoot(String query) async {
-    final q = query.trim();
-    if (q.isEmpty) return null;
+    final n = normalizeArabic(query);
+    if (n.isEmpty) return null;
     final db = await _d;
+    final bare = stripArticle(n);
 
-    // 1) exact root
-    var rows = await db.query('roots', where: 'root = ?', whereArgs: [q], limit: 1);
+    // 1) the root itself, with or without the article ("بحر", "البحر")
+    var rows = await db.query('roots',
+        where: 'root_norm IN (?,?)', whereArgs: [n, bare], limit: 1);
     if (rows.isNotEmpty) return Root.fromMap(rows.first);
 
-    // 2) via a known surface form
-    final w = await db.rawQuery(
-      'SELECT r.* FROM words w JOIN roots r ON r.root_id = w.root_id '
-      'WHERE w.surface = ? LIMIT 1',
-      [q],
+    // 2) a precomputed spelling variant of a real Quranic word
+    //    ("يعلمون" -> علم, "الكتاب" -> كتب, "بحار" -> بحر)
+    var hit = await db.rawQuery(
+      'SELECT r.* FROM word_keys k JOIN roots r ON r.root_id = k.root_id '
+      'WHERE k.kind = 0 AND k.key IN (?,?) ORDER BY r.freq DESC LIMIT 1',
+      [n, bare],
     );
-    if (w.isNotEmpty) return Root.fromMap(w.first);
+    if (hit.isNotEmpty) return Root.fromMap(hit.first);
 
-    // 3) fuzzy prefix on root
+    // 3) geminate/weak fallback: الرب -> ربب, اليم -> يمم
+    final fuzzy = collapseDoubles(bare);
     rows = await db.query('roots',
-        where: 'root LIKE ?', whereArgs: ['$q%'], limit: 1);
+        where: 'root_fuzzy = ?',
+        whereArgs: [fuzzy],
+        orderBy: 'freq DESC',
+        limit: 1);
+    if (rows.isNotEmpty) return Root.fromMap(rows.first);
+
+    // 4) consonantal skeleton — catches Quranic spellings that drop or move a
+    //    long vowel ("الصلاة" vs the corpus's ٱلصَّلَوٰة). Lossy, so it runs last.
+    hit = await db.rawQuery(
+      'SELECT r.* FROM word_keys k JOIN roots r ON r.root_id = k.root_id '
+      'WHERE k.kind = 1 AND k.key IN (?,?) ORDER BY r.freq DESC LIMIT 1',
+      [skeletonArabic(n), skeletonArabic(bare)],
+    );
+    if (hit.isNotEmpty) return Root.fromMap(hit.first);
+
+    // 4) last resort: prefix match on the normalized root
+    rows = await db.query('roots',
+        where: 'root_norm LIKE ?',
+        whereArgs: ['$bare%'],
+        orderBy: 'freq DESC',
+        limit: 1);
     return rows.isEmpty ? null : Root.fromMap(rows.first);
   }
 
@@ -72,11 +101,15 @@ class DictionaryRepository {
 
   Future<List<WordOccurrence>> occurrences(int rootId, {int? limit}) async {
     final db = await _d;
-    final rows = await db.query('words',
-        where: 'root_id = ?',
-        whereArgs: [rootId],
-        orderBy: 'surah, ayah',
-        limit: limit);
+    // Ayah text lives in `ayahs` (stored once per verse), not on each word row.
+    final rows = await db.rawQuery(
+      'SELECT w.surface, w.surah, w.ayah, a.text AS verse_text '
+      'FROM words w LEFT JOIN ayahs a '
+      '  ON a.surah = w.surah AND a.ayah = w.ayah '
+      'WHERE w.root_id = ? ORDER BY w.surah, w.ayah'
+      '${limit != null ? ' LIMIT $limit' : ''}',
+      [rootId],
+    );
     return rows.map(WordOccurrence.fromMap).toList();
   }
 
@@ -91,8 +124,10 @@ class DictionaryRepository {
   Future<List<SurahGroup>> occurrencesBySurah(int rootId) async {
     final db = await _d;
     final rows = await db.rawQuery(
-      'SELECT w.surface, w.surah, w.ayah, w.verse_text, s.name AS surah_name '
+      'SELECT w.surface, w.surah, w.ayah, a.text AS verse_text, '
+      '       s.name AS surah_name '
       'FROM words w JOIN surahs s ON s.surah = w.surah '
+      'LEFT JOIN ayahs a ON a.surah = w.surah AND a.ayah = w.ayah '
       'WHERE w.root_id = ? ORDER BY w.surah, w.ayah',
       [rootId],
     );

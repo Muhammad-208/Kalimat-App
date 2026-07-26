@@ -1,0 +1,112 @@
+name: build apk
+
+# Builds an installable release APK on GitHub's runners, so producing a build
+# never depends on a local machine having the Android SDK.
+#
+# Signing: if the repo has the KEYSTORE_BASE64 / KEYSTORE_PASSWORD /
+# KEY_ALIAS secrets set, the APK is signed with the real upload key. Without
+# them the build still succeeds, signed with the debug key — installable for
+# testing, but NOT publishable to Play and Google Sign-In will not work.
+#
+# To enable real signing:
+#   base64 -w0 kalimat-upload.jks    → paste as secret KEYSTORE_BASE64
+#   secret KEYSTORE_PASSWORD = the store/key password
+#   secret KEY_ALIAS         = upload
+
+on:
+  workflow_dispatch:
+    inputs:
+      publish_release:
+        description: >-
+          Attach the APK to a "latest-apk" prerelease for easy phone download.
+          NOTE: on a public repo this makes the APK publicly downloadable.
+        type: boolean
+        default: true
+  push:
+    # feat/** so a branch can produce an installable APK before it is merged;
+    # manual (workflow_dispatch) runs only become available once this file is
+    # on the default branch, which is a GitHub limitation.
+    branches: ["main", "feat/**"]
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+
+      # android/ is not tracked (bootstrap.sh generates it), so create it here.
+      - name: Generate platform folders
+        run: bash bootstrap.sh
+
+      # Checked inside the shell, not in `if:` — step-level env is not available
+      # to that step's own condition, so the guard would never fire there.
+      - name: Configure upload-key signing
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEYSTORE_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+          KEY_ALIAS: ${{ secrets.KEY_ALIAS }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "::warning::No KEYSTORE_BASE64 secret — signing with the DEBUG key."
+            echo "This APK is sideload-only and Google Sign-In will not work."
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/upload.jks"
+          cat > android/key.properties <<EOF
+          storePassword=$KEYSTORE_PASSWORD
+          keyPassword=$KEYSTORE_PASSWORD
+          keyAlias=$KEY_ALIAS
+          storeFile=$RUNNER_TEMP/upload.jks
+          EOF
+          echo "Upload key configured."
+
+      - name: Analyze
+        run: flutter analyze --no-fatal-infos
+
+      - name: Test
+        run: flutter test
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Report signer
+        run: |
+          APK=build/app/outputs/flutter-apk/app-release.apk
+          ls -lh "$APK"
+          SIGNER=$(ls "$ANDROID_HOME"/build-tools/*/apksigner | tail -1)
+          "$SIGNER" verify --print-certs "$APK" | grep -i "certificate DN" || true
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: kalimat-release-apk
+          path: build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+
+      # Direct .apk link that a phone browser can install from — artifacts
+      # download as a zip, which phones handle poorly.
+      - name: Publish to latest-apk prerelease
+        if: >-
+          github.event_name == 'push' ||
+          (github.event_name == 'workflow_dispatch' && inputs.publish_release)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete latest-apk --yes --cleanup-tag 2>/dev/null || true
+          gh release create latest-apk \
+            build/app/outputs/flutter-apk/app-release.apk \
+            --title "Kalimat — latest APK" \
+            --notes "Automated build from ${GITHUB_SHA:0:7}. Sideload only." \
+            --prerelease

@@ -95,7 +95,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(height: 38),
 
               // ── Suggested roots ──
-              SectionHeader('جذور مقترحة'),
+              const SectionHeader('جذور مقترحة'),
               const SizedBox(height: 16),
               ref.watch(suggestedRootsProvider).when(
                     loading: () => const _ChipsSkeleton(),
@@ -112,7 +112,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(height: 32),
 
               // ── Most frequent roots ──
-              SectionHeader('أكثر الجذور ورودًا'),
+              const SectionHeader('أكثر الجذور ورودًا'),
               const SizedBox(height: 8),
               ref.watch(topRootsProvider).when(
                     loading: () => const SizedBox(height: 40),
@@ -124,7 +124,7 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
               const SizedBox(height: 30),
 
               // ── Recent searches (local; stub) ──
-              SectionHeader('عمليات البحث الأخيرة'),
+              const SectionHeader('عمليات البحث الأخيرة'),
               const SizedBox(height: 8),
               _RecentRow(label: 'بحر', onTap: () => _search('بحر')),
               _RecentRow(label: 'صبر', onTap: () => _search('صبر')),
