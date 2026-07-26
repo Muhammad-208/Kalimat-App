@@ -122,7 +122,60 @@ def segment_openiti(raw: str):
         yield out
 
 
-SEGMENTERS = {"generic": segment_generic, "openiti": segment_openiti}
+_BARE_HEADWORD = re.compile(r"^[ء-ي]{2,7}$")
+
+
+def segment_headword_para(raw: str):
+    """OpenITI mARkdown where the headword sits alone in its own paragraph.
+
+    Used by مفردات الراغب (and similarly laid-out editions):
+
+        # بحر                      <- headword alone
+        # أصل البحر: كل مكان واسع…  <- body paragraphs follow
+        ~~البعير: شققت أذنه…
+
+    Distinct from segment_openiti, where headwords are '### | (root)' lines.
+    """
+    headword, paras = None, []
+
+    def flush():
+        if headword and paras:
+            body = "\n".join(p for p in paras if p)
+            body = _PAGE.sub(" ", body)
+            body = _EDITORIAL.sub("", body)
+            body = re.sub(r"[ \t]+", " ", body).strip()
+            if body:
+                return headword, body
+        return None
+
+    for line in raw.splitlines():
+        if line.startswith("~~"):
+            if paras:
+                paras[-1] += " " + line[2:].strip()
+            continue
+        if line.startswith("###"):
+            continue                       # volume / chapter divider
+        if not line.startswith("#"):
+            continue
+        text = line.lstrip("#").strip()
+        if not text:
+            continue
+        if _BARE_HEADWORD.match(text):
+            if (out := flush()):
+                yield out
+            headword, paras = text, []
+        elif headword is not None:
+            paras.append(text)
+
+    if (out := flush()):
+        yield out
+
+
+SEGMENTERS = {
+    "generic": segment_generic,
+    "openiti": segment_openiti,
+    "headword": segment_headword_para,
+}
 # e.g. SEGMENTERS["ayn"] = segment_ayn   # <- custom for al-ʿAyn, etc.
 
 
