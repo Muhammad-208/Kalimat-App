@@ -66,7 +66,63 @@ def segment_generic(raw: str):
         yield headword, "\n".join(buf).strip()
 
 
-SEGMENTERS = {"generic": segment_generic}
+_OPENITI_HEAD = re.compile(r"^###\s*\|+\s*\(([ء-ي\s]{2,})\)\s*$")
+_PAGE = re.compile(r"\bPageV\d+P\d+\b|\bms\d+\b")          # page + milestone marks
+_EDITORIAL = re.compile(r"[«»\[\]]")                        # bracketed editorial marks
+
+# The OpenITI edition sometimes injects a spurious "### |" divider in the MIDDLE
+# of a word, e.g. «وهو أصل و / ### | اح / # د.» for «وهو أصل واحد». Splicing the
+# fragment back in (no spaces) restores the word; real section headings are
+# longer or bracketed, so they are left alone and dropped as headings later.
+_MIDWORD_SPLIT = re.compile(r"\n###\s*\|+\s*([^\n\[(]{1,6}?)\s*\n#[ \t]*", re.M)
+
+
+def segment_openiti(raw: str):
+    """OpenITI mARkdown, root-organized (مقاييس اللغة, لسان العرب, الصحاح...).
+
+    Structure:
+        ### | (بحر)          <- headword, root in parentheses
+        # first paragraph…   <- '#' opens a paragraph
+        ~~continuation…      <- '~~' continues the paragraph above
+
+    Page markers (PageV01P003) and milestones (ms0085) are stripped: they are
+    artefacts of the digital edition, not part of the text.
+    """
+    raw = _MIDWORD_SPLIT.sub(r"\1", raw)
+    headword, paras = None, []
+
+    def flush():
+        if headword and paras:
+            body = "\n".join(p.strip() for p in paras if p.strip())
+            body = _PAGE.sub(" ", body)
+            body = _EDITORIAL.sub("", body)
+            body = re.sub(r"[ \t]+", " ", body).strip()
+            if body:
+                return headword, body
+        return None
+
+    for line in raw.splitlines():
+        m = _OPENITI_HEAD.match(line)
+        if m:
+            if (out := flush()):
+                yield out
+            headword, paras = m.group(1).strip(), []
+        elif headword is None:
+            continue
+        elif line.startswith("~~"):
+            # continuation of the paragraph above — join, don't break the line
+            if paras:
+                paras[-1] += " " + line[2:].strip()
+            else:
+                paras.append(line[2:].strip())
+        elif line.startswith("#"):
+            paras.append(line.lstrip("#").strip())
+
+    if (out := flush()):
+        yield out
+
+
+SEGMENTERS = {"generic": segment_generic, "openiti": segment_openiti}
 # e.g. SEGMENTERS["ayn"] = segment_ayn   # <- custom for al-ʿAyn, etc.
 
 
