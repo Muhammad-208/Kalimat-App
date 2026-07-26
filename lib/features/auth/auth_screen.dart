@@ -54,7 +54,7 @@ class AuthScreen extends StatelessWidget {
                         Text('يهديك إلى أصلِ الكلمةِ ومعناها',
                             style: TextStyle(
                                 fontSize: 14,
-                                color: const Color(0xFFF4EEE1).withOpacity(0.8))),
+                                color: const Color(0xFFF4EEE1).withValues(alpha: 0.8))),
                       ],
                     ),
                   ),
@@ -182,7 +182,7 @@ class _AuthSheetState extends ConsumerState<_AuthSheet> {
                   style: const TextStyle(
                       fontSize: 22, fontWeight: FontWeight.w700, color: KColors.ink)),
               const SizedBox(height: 6),
-              Text('سجّل الدخول لحفظ بحثك ومزامنة إعداداتك',
+              const Text('سجّل الدخول لحفظ بحثك ومزامنة إعداداتك',
                   textAlign: TextAlign.center,
                   style: TextStyle(fontSize: 14, color: KColors.sub)),
               const SizedBox(height: 20),
@@ -196,7 +196,7 @@ class _AuthSheetState extends ConsumerState<_AuthSheet> {
                     borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: KColors.verseBorder),
                   ),
-                  child: Text(
+                  child: const Text(
                     'المزامنة غير مُهيّأة بعد على هذه النسخة. التطبيق يعمل كاملًا دون حساب.',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 12, color: KColors.brassText),
@@ -225,19 +225,19 @@ class _AuthSheetState extends ConsumerState<_AuthSheet> {
               ),
               const SizedBox(height: 18),
 
-              Row(
+              const Row(
                 children: [
-                  const Expanded(child: Divider(color: KColors.paperLine)),
+                  Expanded(child: Divider(color: KColors.paperLine)),
                   Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    padding: EdgeInsets.symmetric(horizontal: 12),
                     child: Text('أو', style: TextStyle(color: KColors.mist, fontSize: 13)),
                   ),
-                  const Expanded(child: Divider(color: KColors.paperLine)),
+                  Expanded(child: Divider(color: KColors.paperLine)),
                 ],
               ),
               const SizedBox(height: 18),
 
-              Text('البريد الإلكتروني',
+              const Text('البريد الإلكتروني',
                   style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -255,7 +255,7 @@ class _AuthSheetState extends ConsumerState<_AuthSheet> {
                 ),
               ),
               const SizedBox(height: 12),
-              Text('كلمة المرور',
+              const Text('كلمة المرور',
                   style: TextStyle(
                       fontSize: 12,
                       fontWeight: FontWeight.w700,
@@ -301,7 +301,7 @@ class _AuthSheetState extends ConsumerState<_AuthSheet> {
                   child: Text.rich(TextSpan(children: [
                     TextSpan(
                         text: _register ? 'لديك حساب؟ ' : 'ليس لديك حساب؟ ',
-                        style: TextStyle(fontSize: 13, color: KColors.sub)),
+                        style: const TextStyle(fontSize: 13, color: KColors.sub)),
                     TextSpan(
                         text: _register ? 'تسجيل الدخول' : 'أنشئ حسابًا',
                         style: const TextStyle(
@@ -318,11 +318,11 @@ class _AuthSheetState extends ConsumerState<_AuthSheet> {
                   borderRadius: BorderRadius.circular(10),
                   border: Border.all(color: KColors.tealTintBorder),
                 ),
-                child: Row(
+                child: const Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.lock_outline, size: 15, color: KColors.teal),
-                    const SizedBox(width: 8),
+                    Icon(Icons.lock_outline, size: 15, color: KColors.teal),
+                    SizedBox(width: 8),
                     Flexible(
                       child: Text('الاستخدام متاح دون اتصال — الحساب للمزامنة فقط',
                           style: TextStyle(fontSize: 12, color: KColors.teal)),
@@ -333,7 +333,7 @@ class _AuthSheetState extends ConsumerState<_AuthSheet> {
               const SizedBox(height: 6),
               TextButton(
                 onPressed: () => context.pop(),
-                child: Text('المتابعة دون حساب',
+                child: const Text('المتابعة دون حساب',
                     style: TextStyle(fontSize: 13, color: KColors.sub)),
               ),
             ],

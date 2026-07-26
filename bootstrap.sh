@@ -17,6 +17,11 @@ for f in android/app/build.gradle android/app/build.gradle.kts; do
   rm -f "$f.bak"
 done
 
+echo "→ applying release signing config ..."
+# flutter create rewrites build.gradle.kts, so re-inject the signing wiring.
+# Falls back to the debug key when android/key.properties is absent.
+python3 tools/apply_signing.py
+
 echo "→ flutter pub get ..."
 flutter pub get
 

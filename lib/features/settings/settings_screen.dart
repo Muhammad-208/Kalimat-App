@@ -132,14 +132,14 @@ class _SignInCard extends ConsumerWidget {
       clipBehavior: Clip.antiAlias,
       child: InkWell(
         onTap: () => context.push('/auth'),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+        child: const Padding(
+          padding: EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           child: Row(
             children: [
-              const Icon(Icons.account_circle_outlined,
+              Icon(Icons.account_circle_outlined,
                   color: Color(0xFFF4EEE1), size: 28),
-              const SizedBox(width: 14),
-              const Expanded(
+              SizedBox(width: 14),
+              Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -154,7 +154,7 @@ class _SignInCard extends ConsumerWidget {
                   ],
                 ),
               ),
-              const Icon(Icons.chevron_left, color: Color(0x99F4EEE1)),
+              Icon(Icons.chevron_left, color: Color(0x99F4EEE1)),
             ],
           ),
         ),
@@ -282,7 +282,7 @@ class _SourceRow extends StatelessWidget {
           ),
           Switch(
             value: visible,
-            activeColor: teal,
+            activeThumbColor: teal,
             onChanged: (_) => onChanged(),
           ),
         ],

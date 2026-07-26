@@ -1,7 +1,11 @@
 # تفعيل المزامنة — Firebase setup
 
-The sync code is built and wired. It stays **dormant** (app runs fully offline)
-until you drop in your own Firebase project. No code changes needed — just config.
+The sync code is built and wired, and the app already ships pointed at the
+`kalimat-be25f` Firebase project (see `lib/firebase_options.dart` /
+`android/app/google-services.json`). If Firebase init fails for any reason
+the app falls back to fully offline with no sync — no code changes needed,
+just config. To point it at a different project instead, follow the steps
+below.
 
 ## What syncs
 Only lightweight **user state** — currently the set of hidden sources — under
@@ -25,6 +29,17 @@ Pick your Firebase project and the platforms (Android now, iOS later). This:
 - adds `android/app/google-services.json`.
 
 After that, `main()` initializes Firebase automatically and the login buttons go live.
+
+**Also update the Google server client id.** This project never applies the
+`com.google.gms.google-services` Gradle plugin (`android/` is generated fresh
+by `bootstrap.sh`, which doesn't add it), so `google_sign_in` can't read the
+plugin-generated `default_web_client_id` resource on its own. Instead
+`lib/data/auth/auth_service.dart` passes the "Web client" OAuth client id
+(type 3) from `google-services.json` explicitly via `GoogleSignIn(serverClientId:
+...)`. After running `flutterfire configure`, copy the new `client_id` under
+`oauth_client` (`client_type: 3`) in your `google-services.json` into the
+`_googleServerClientId` constant at the top of `auth_service.dart` — otherwise
+Google sign-in will silently keep requesting tokens for the old project.
 
 ## 3. Android signing fingerprint (required for Google sign-in)
 Google sign-in needs your app's **SHA-1** (and SHA-256) registered:

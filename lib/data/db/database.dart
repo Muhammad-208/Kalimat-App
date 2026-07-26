@@ -22,7 +22,9 @@ class KalimatDb {
   static const _fileName = 'kalimat.db';
 
   /// Bump this whenever you ship a new kalimat.db (keep in sync with meta.db_version).
-  static const bundledDbVersion = 1;
+  /// v2 = full Quranic Arabic Corpus spine (1,651 roots / 50,268 words) with
+  /// precomputed search keys, replacing the 10-root sample DB.
+  static const bundledDbVersion = 2;
 
   Database? _db;
 
