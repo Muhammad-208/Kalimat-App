@@ -17,6 +17,11 @@ for f in android/app/build.gradle android/app/build.gradle.kts; do
   rm -f "$f.bak"
 done
 
+# flutter create drops a boilerplate widget test that instantiates MyApp — a
+# class this project doesn't have (the root widget is KalimatApp). Left in
+# place it fails `flutter analyze` and `flutter test` on a fresh bootstrap.
+rm -f test/widget_test.dart
+
 echo "→ applying release signing config ..."
 # flutter create rewrites build.gradle.kts, so re-inject the signing wiring.
 # Falls back to the debug key when android/key.properties is absent.
