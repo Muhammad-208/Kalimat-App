@@ -52,6 +52,9 @@ flutter:
     # The prebuilt SQLite database produced by your Python pipeline
     # (build_quran_db.py + build_furuq.py). Copied to app storage on first run.
     - assets/db/kalimat.db
+    # Content fingerprint of the file above. The app re-installs the database
+    # whenever this changes, so shipping new content can't be missed.
+    - assets/db/kalimat.db.stamp
 
   fonts:
     # All four are SIL OFL — free to bundle & redistribute in a Play app.

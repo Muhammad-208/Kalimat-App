@@ -21,10 +21,17 @@ class KalimatDb {
   static const _assetPath = 'assets/db/kalimat.db';
   static const _fileName = 'kalimat.db';
 
-  /// Bump this whenever you ship a new kalimat.db (keep in sync with meta.db_version).
-  /// v2 = full Quranic Arabic Corpus spine (1,651 roots / 50,268 words) with
-  /// precomputed search keys, replacing the 10-root sample DB.
-  static const bundledDbVersion = 2;
+  /// Fingerprint of the bundled kalimat.db, written by `tools/stamp_db.py`.
+  ///
+  /// The install decision is driven by this stamp rather than by a
+  /// hand-maintained integer. Relying on the integer failed twice: new content
+  /// shipped, the bump was forgotten, and every existing install silently kept
+  /// its old database — the app looked empty while the shipped data was fine.
+  /// The stamp changes automatically whenever the database does.
+  static const _stampAsset = 'assets/db/kalimat.db.stamp';
+
+  /// Floor for installs predating the stamp (they have no stamp file to read).
+  static const bundledDbVersion = 3;
 
   Database? _db;
 
@@ -35,14 +42,27 @@ class KalimatDb {
     final dbPath = p.join(dir.path, _fileName);
     final versionFile = File('$dbPath.version');
 
+    final stampFile = File('$dbPath.stamp');
+
     final exists = await File(dbPath).exists();
     final installedVersion = exists && await versionFile.exists()
         ? int.tryParse((await versionFile.readAsString()).trim()) ?? 0
         : 0;
 
-    if (!exists || installedVersion < bundledDbVersion) {
+    // The stamp asset is tiny (a hex digest), so reading it on every launch is
+    // cheap — unlike the multi-megabyte database it describes.
+    final bundledStamp =
+        (await rootBundle.loadString(_stampAsset, cache: false)).trim();
+    final installedStamp = exists && await stampFile.exists()
+        ? (await stampFile.readAsString()).trim()
+        : '';
+
+    if (!exists ||
+        installedVersion < bundledDbVersion ||
+        installedStamp != bundledStamp) {
       await _copyFromAsset(dbPath);
       await versionFile.writeAsString('$bundledDbVersion');
+      await stampFile.writeAsString(bundledStamp);
     }
 
     return openDatabase(dbPath, readOnly: true);

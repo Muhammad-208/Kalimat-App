@@ -87,6 +87,11 @@ jobs:
           EOF
           echo "Upload key configured."
 
+      # A stale stamp means existing installs keep their old database and the
+      # app looks empty even though the shipped data is correct. Catch it here.
+      - name: Verify the database stamp is current
+        run: python3 tools/stamp_db.py --check
+
       - name: Analyze
         run: flutter analyze --no-fatal-infos
 
